@@ -17,7 +17,7 @@ type Tamagotchi struct {
 
 // NewTamagotchi : Constructor of Tamagotchi struct
 func NewTamagotchi(name string) *Tamagotchi {
-	return &Tamagotchi{Name: name, Hunger: 80, Fatigue: 0, Hapiness: 100}
+	return &Tamagotchi{Name: name, Hunger: 90, Fatigue: 0, Hapiness: 100}
 }
 
 // PrintStatus : Print the Tamagotchi status
@@ -41,9 +41,8 @@ func (tamago *Tamagotchi) Live() {
 func (tamago *Tamagotchi) IsAlive() bool {
 	if tamago.Hunger >= 100 {
 		return false
-	} else {
-		return true
 	}
+	return true
 }
 
 // Feed : give food to Tamagotchi
@@ -64,15 +63,13 @@ func (tamago *Tamagotchi) Bed() {
 func decrease(base int, value int) int {
 	if base-value <= 0 {
 		return base
-	} else {
-		return value
 	}
+	return value
 }
 
 func increase(base int, value int) int {
-	if base+value >= 100 {
+	if base+value > 100 {
 		return 0
-	} else {
-		return value
 	}
+	return value
 }

@@ -3,7 +3,7 @@
  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
  [![Go Report Card](https://goreportcard.com/badge/github.com/S0obi/tamago)](https://goreportcard.com/report/github.com/S0obi/tamago)
 
-Tamagotchi game written in Golang
+Tamagotchi game written in Golang using the Ebiten framework
 
 ## Build
 

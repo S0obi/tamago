@@ -1,40 +1,130 @@
 package main
 
 import (
-	"fmt"
+	"image"
+	_ "image/png"
+	"log"
+	"os"
 	"tamago/pkg/food"
 	"tamago/pkg/tamagotchi"
+	"time"
 
-	"github.com/manifoldco/promptui"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
-func main() {
-	tamago := tamagotchi.NewTamagotchi("Tama")
+const (
+	screenWidth  = 320
+	screenHeight = 240
+	defaultTPS   = 60
+)
 
-	go tamago.Live()
+var (
+	tamago        *tamagotchi.Tamagotchi
+	runnerImage   *ebiten.Image
+	happyImage    *ebiten.Image
+	deadImage     *ebiten.Image
+	feedingImage  *ebiten.Image
+	sleepingImage *ebiten.Image
+)
 
-	prompt := promptui.Select{
-		Label: "Select an action",
-		Items: []string{"Feed (meat)", "Feed (candy)", "Bed"},
-	}
+// Game : ebiten game structure
+type Game struct {
+	count int
+	state string
+}
 
-	for tamago.IsAlive() {
-		_, action, err := prompt.Run()
-		if err != nil {
-			fmt.Printf("Prompt failed %v\n", err)
-			return
+// Update : ebiten update method
+func (g *Game) Update() error {
+	if tamago.IsAlive() {
+
+		// feeding
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+			g.count = defaultTPS * 2
+			g.state = "feeding"
+			tamago.Feed(food.Meat)
 		}
 
-		if action == "Feed (meat)" {
-			tamago.Feed(food.Meat)
-		} else if action == "Feed (candy)" {
-			tamago.Feed(food.Candy)
-		} else if action == "Bed" {
+		// sleeping
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+			g.count = defaultTPS * 5
+			g.state = "sleeping"
 			tamago.Bed()
 		}
 
-		tamago.PrintStatus()
+		if g.count > 0 {
+			g.count--
+		} else {
+			g.state = "happy"
+		}
+
+	} else {
+		g.state = "dead"
+	}
+	return nil
+}
+
+// Draw : ebiten draw method
+func (g *Game) Draw(screen *ebiten.Image) {
+	op := &ebiten.DrawImageOptions{}
+
+	if tamago.IsAlive() {
+		if g.state == "dead" {
+			screen.DrawImage(deadImage, op)
+		} else if g.state == "happy" {
+			screen.DrawImage(happyImage, op)
+		} else if g.state == "feeding" {
+			screen.DrawImage(feedingImage, op)
+		} else if g.state == "sleeping" {
+			screen.DrawImage(sleepingImage, op)
+		}
+	} else {
+		screen.DrawImage(deadImage, op)
+	}
+}
+
+// Layout : ebiten layout method
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return screenWidth, screenHeight
+}
+
+func newImageFromFile(path string) *ebiten.Image {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	fmt.Println("So sad ... Your Tamagotchi is dead!")
+	defer file.Close()
+
+	img, _, err := image.Decode(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return ebiten.NewImageFromImage(img)
+}
+
+func printLiveStatus(tamago *tamagotchi.Tamagotchi) {
+	for {
+		tamago.PrintStatus()
+		time.Sleep(3 * time.Second)
+	}
+}
+
+func main() {
+	tamago = tamagotchi.NewTamagotchi("Tama")
+
+	go tamago.Live()
+	go printLiveStatus(tamago)
+
+	happyImage = newImageFromFile("assets/happy.png")
+	deadImage = newImageFromFile("assets/dead.png")
+	feedingImage = newImageFromFile("assets/miam.png")
+	sleepingImage = newImageFromFile("assets/dodo.png")
+
+	ebiten.SetWindowSize(screenWidth*2, screenHeight*2)
+	ebiten.SetWindowTitle("Tamago")
+	if err := ebiten.RunGame(&Game{}); err != nil {
+		log.Fatal(err)
+	}
 }

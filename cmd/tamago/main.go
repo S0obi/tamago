@@ -16,7 +16,7 @@ const (
 )
 
 func printTamagoStatus(tamago *tamagotchi.Tamagotchi) {
-	for {
+	for tamago.IsAlive() {
 		tamago.PrintStatus()
 		time.Sleep(2 * time.Second)
 	}

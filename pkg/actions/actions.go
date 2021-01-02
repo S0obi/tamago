@@ -12,10 +12,12 @@ const (
 	Candy = "candy"
 	// Feed : Feed Tamagotchi
 	Feed = "feed"
+	// Heal : Heal Tamagotchi
+	Heal = "heal"
 )
 
 var (
-	actions = [...]string{Sleep, Candy, Feed}
+	actions = [...]string{Sleep, Candy, Feed, Heal}
 )
 
 // NewTamagoActions : Constructor of ActionList

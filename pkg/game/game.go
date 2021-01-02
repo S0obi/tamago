@@ -38,11 +38,13 @@ var (
 	feedingImage  *ebiten.Image
 	sleepingImage *ebiten.Image
 	sadImage      *ebiten.Image
+	sickImage     *ebiten.Image
 
 	// action image
 	actionFeedImage  *ebiten.Image
 	actionCandyImage *ebiten.Image
 	actionSleepImage *ebiten.Image
+	actionsHealImage *ebiten.Image
 )
 
 // Game : ebiten game structure
@@ -71,11 +73,13 @@ func (g *Game) Init() {
 	feedingImage, _, _ = ebitenutil.NewImageFromFile("assets/miam.png")
 	sleepingImage, _, _ = ebitenutil.NewImageFromFile("assets/dodo.png")
 	sadImage, _, _ = ebitenutil.NewImageFromFile("assets/sad.png")
+	sickImage, _, _ = ebitenutil.NewImageFromFile("assets/sick.png")
 
 	// action bar images
 	actionFeedImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/feed.png")
 	actionCandyImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/candy.png")
 	actionSleepImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/sleep.png")
+	actionsHealImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/heal.png")
 
 	g.currentAction = actions.NewTamagoActions()
 
@@ -115,6 +119,7 @@ func (g *Game) PlayMusic() {
 // Update : ebiten update method
 func (g *Game) Update() error {
 	if g.Tamago.IsAlive() {
+		// Mute the theme music
 		if inpututil.IsKeyJustPressed(ebiten.KeyM) {
 			g.muteMusic = !g.muteMusic
 			if g.muteMusic {
@@ -143,6 +148,8 @@ func (g *Game) Update() error {
 					g.feedTamago()
 				} else if g.currentAction.Value == actions.Candy {
 					g.giveACandy()
+				} else if g.currentAction.Value == actions.Heal {
+					g.healTamago()
 				}
 			}
 		}
@@ -182,6 +189,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.DrawImage(sleepingImage, op)
 		} else if g.currentAnimation == status.Sad {
 			screen.DrawImage(sadImage, op)
+		} else if g.currentAnimation == status.Sick {
+			screen.DrawImage(sickImage, op)
 		}
 		g.drawActionBar(screen)
 	} else {
@@ -212,6 +221,12 @@ func (g *Game) putTamagoInBed() {
 	g.Tamago.Bed()
 }
 
+func (g *Game) healTamago() {
+	g.currentAnimation = status.Sleeping
+	g.count = sleepingAnimationLength
+	g.Tamago.Heal()
+}
+
 func (g *Game) drawActionBar(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(80.0, 250.0)
@@ -222,5 +237,7 @@ func (g *Game) drawActionBar(screen *ebiten.Image) {
 		screen.DrawImage(actionFeedImage, op)
 	} else if g.currentAction.Value == actions.Candy {
 		screen.DrawImage(actionCandyImage, op)
+	} else if g.currentAction.Value == actions.Heal {
+		screen.DrawImage(actionsHealImage, op)
 	}
 }

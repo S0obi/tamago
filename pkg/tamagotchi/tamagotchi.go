@@ -15,9 +15,14 @@ type Tamagotchi struct {
 	Hapiness int
 }
 
+const (
+	// HapinessThreshold : Min level of hapiness to be happy
+	HapinessThreshold = 25
+)
+
 // NewTamagotchi : Constructor of Tamagotchi struct
 func NewTamagotchi(name string) *Tamagotchi {
-	return &Tamagotchi{Name: name, Hunger: 90, Fatigue: 0, Hapiness: 100}
+	return &Tamagotchi{Name: name, Hunger: 90, Fatigue: 0, Hapiness: 50}
 }
 
 // PrintStatus : Print the Tamagotchi status
@@ -31,7 +36,9 @@ func (tamago *Tamagotchi) Live() {
 		tamago.Hunger += increase(tamago.Hunger, 1)
 		tamago.Fatigue += increase(tamago.Fatigue, 1)
 		if rand.Intn(4) == 2 {
-			tamago.Hapiness += increase(tamago.Hapiness, 1)
+			tamago.Hapiness += increase(tamago.Hapiness, 10)
+		} else {
+			tamago.Hapiness -= decrease(tamago.Hapiness, 1)
 		}
 		time.Sleep(1 * time.Second)
 	}

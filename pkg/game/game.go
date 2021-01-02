@@ -56,6 +56,7 @@ type Game struct {
 	currentActionID        int
 	CurrentMusic           chan string
 	deadMusicAlreadyPlayed bool
+	muteMusic              bool
 }
 
 // Init : init method
@@ -83,11 +84,12 @@ func (g *Game) Init() {
 	g.audioContext = audio.NewContext(sampleRate)
 	g.audioPlayer = utils.NewMusicFromFile("assets/music/theme.mp3", g.audioContext)
 	g.deadMusicAlreadyPlayed = false
+	g.muteMusic = false
 }
 
 func (g *Game) inifiniteThemeMusic() {
 	for {
-		if !g.audioPlayer.IsPlaying() && g.Tamago.State != status.Dead {
+		if !g.audioPlayer.IsPlaying() && g.Tamago.State != status.Dead && !g.muteMusic {
 			g.CurrentMusic <- "theme"
 		}
 		time.Sleep(2 * time.Second)
@@ -99,10 +101,10 @@ func (g *Game) PlayMusic() {
 	for {
 		go g.inifiniteThemeMusic()
 		music := <-g.CurrentMusic
+		g.audioPlayer.Close()
 		if music == "theme" || music == "" {
 			g.audioPlayer = utils.NewMusicFromFile("assets/music/theme.mp3", g.audioContext)
 		} else if music == "dead" && !g.deadMusicAlreadyPlayed {
-			g.audioPlayer.Close()
 			g.audioPlayer = utils.NewMusicFromFile("assets/music/dead.mp3", g.audioContext)
 			g.deadMusicAlreadyPlayed = true
 		}
@@ -113,6 +115,15 @@ func (g *Game) PlayMusic() {
 // Update : ebiten update method
 func (g *Game) Update() error {
 	if g.Tamago.IsAlive() {
+		if inpututil.IsKeyJustPressed(ebiten.KeyM) {
+			g.muteMusic = !g.muteMusic
+			if g.muteMusic {
+				g.audioPlayer.Close()
+			} else {
+				g.CurrentMusic <- "theme"
+			}
+		}
+
 		if g.currentAnimation != status.Sleeping {
 			// Decrease action ID
 			if inpututil.IsKeyJustPressed(ebiten.KeyDown) {

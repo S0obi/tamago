@@ -39,12 +39,7 @@ func (tamago *Tamagotchi) Live() {
 	for tamago.IsAlive() {
 		tamago.Hunger += increase(tamago.Hunger, 1)
 		tamago.Fatigue += increase(tamago.Fatigue, 1)
-
-		if rand.Intn(10) == 2 {
-			tamago.Hapiness += increase(tamago.Hapiness, 10)
-		} else {
-			tamago.Hapiness -= decrease(tamago.Hapiness, 1)
-		}
+		tamago.Hapiness = tamago.drawHapiness()
 
 		if tamago.Fatigue > FatigueThreshold {
 			tamago.State = status.Sleeping
@@ -82,6 +77,14 @@ func (tamago *Tamagotchi) Feed(yummy food.Food) {
 // Bed : tamagotchi will go to bed
 func (tamago *Tamagotchi) Bed() {
 	tamago.Fatigue = 0
+	tamago.Hunger += increase(tamago.Hunger, 10)
+}
+
+func (tamago *Tamagotchi) drawHapiness() int {
+	if rand.Intn(10) == 2 {
+		return tamago.Hapiness + increase(tamago.Hapiness, 10)
+	}
+	return tamago.Hapiness - decrease(tamago.Hapiness, 1)
 }
 
 func decrease(base int, value int) int {

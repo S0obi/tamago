@@ -27,7 +27,7 @@ func main() {
 	g.Init()
 
 	go g.Tamago.Live()
-	go g.AudioPlayer.Play()
+	go g.PlayMusic()
 	go printTamagoStatus(g.Tamago)
 
 	ebiten.SetWindowSize(screenWidth*2, screenHeight*2)

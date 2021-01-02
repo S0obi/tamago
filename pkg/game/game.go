@@ -1,20 +1,29 @@
 package game
 
 import (
+	"container/ring"
+	"tamago/pkg/actions"
 	"tamago/pkg/food"
 	"tamago/pkg/status"
 	"tamago/pkg/tamagotchi"
 	"tamago/pkg/utils"
+	"time"
+
+	_ "image/png" // need this for png support
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
+	// audio
+	sampleRate = 22050
+
 	// display
-	screenWidth  = 320
-	screenHeight = 240
+	screenWidth  = 330
+	screenHeight = 330
 	defaultTPS   = 60
 
 	// timing
@@ -23,64 +32,127 @@ const (
 )
 
 var (
-	tamago        *tamagotchi.Tamagotchi
-	runnerImage   *ebiten.Image
+	// animation images
 	happyImage    *ebiten.Image
 	deadImage     *ebiten.Image
 	feedingImage  *ebiten.Image
 	sleepingImage *ebiten.Image
 	sadImage      *ebiten.Image
+
+	// action image
+	actionFeedImage  *ebiten.Image
+	actionCandyImage *ebiten.Image
+	actionSleepImage *ebiten.Image
 )
 
 // Game : ebiten game structure
 type Game struct {
-	count       int
-	state       status.Status
-	Tamago      *tamagotchi.Tamagotchi
-	AudioPlayer *audio.Player
+	count                  int
+	Tamago                 *tamagotchi.Tamagotchi
+	audioPlayer            *audio.Player
+	audioContext           *audio.Context
+	currentAnimation       status.Status
+	currentAction          *ring.Ring
+	currentActionID        int
+	CurrentMusic           chan string
+	deadMusicAlreadyPlayed bool
 }
 
 // Init : init method
 func (g *Game) Init() {
 	g.Tamago = tamagotchi.NewTamagotchi("Tama")
 
-	// images
-	happyImage = utils.NewImageFromFile("assets/happy.png")
-	deadImage = utils.NewImageFromFile("assets/dead.png")
-	feedingImage = utils.NewImageFromFile("assets/miam.png")
-	sleepingImage = utils.NewImageFromFile("assets/dodo.png")
-	sadImage = utils.NewImageFromFile("assets/sad.png")
+	g.Tamago.State = status.Happy
+
+	// animation images
+	happyImage, _, _ = ebitenutil.NewImageFromFile("assets/happy.png")
+	deadImage, _, _ = ebitenutil.NewImageFromFile("assets/dead.png")
+	feedingImage, _, _ = ebitenutil.NewImageFromFile("assets/miam.png")
+	sleepingImage, _, _ = ebitenutil.NewImageFromFile("assets/dodo.png")
+	sadImage, _, _ = ebitenutil.NewImageFromFile("assets/sad.png")
+
+	// action bar images
+	actionFeedImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/feed.png")
+	actionCandyImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/candy.png")
+	actionSleepImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/sleep.png")
+
+	g.currentAction = actions.NewTamagoActions()
 
 	// audio
-	g.AudioPlayer = utils.NewMusicFromFile("assets/music/theme.mp3")
+	g.CurrentMusic = make(chan string)
+	g.audioContext = audio.NewContext(sampleRate)
+	g.audioPlayer = utils.NewMusicFromFile("assets/music/theme.mp3", g.audioContext)
+	g.deadMusicAlreadyPlayed = false
+}
+
+func (g *Game) inifiniteThemeMusic() {
+	for {
+		if !g.audioPlayer.IsPlaying() && g.Tamago.State != status.Dead {
+			g.CurrentMusic <- "theme"
+		}
+		time.Sleep(2 * time.Second)
+	}
+}
+
+// PlayMusic : play theme music
+func (g *Game) PlayMusic() {
+	for {
+		go g.inifiniteThemeMusic()
+		music := <-g.CurrentMusic
+		if music == "theme" || music == "" {
+			g.audioPlayer = utils.NewMusicFromFile("assets/music/theme.mp3", g.audioContext)
+		} else if music == "dead" && !g.deadMusicAlreadyPlayed {
+			g.audioPlayer.Close()
+			g.audioPlayer = utils.NewMusicFromFile("assets/music/dead.mp3", g.audioContext)
+			g.deadMusicAlreadyPlayed = true
+		}
+		g.audioPlayer.Play()
+	}
 }
 
 // Update : ebiten update method
 func (g *Game) Update() error {
 	if g.Tamago.IsAlive() {
+		if g.currentAnimation != status.Sleeping {
+			// Decrease action ID
+			if inpututil.IsKeyJustPressed(ebiten.KeyDown) {
+				g.currentAction = g.currentAction.Prev()
+			}
+
+			// Increase action ID
+			if inpututil.IsKeyJustPressed(ebiten.KeyUp) {
+				g.currentAction = g.currentAction.Next()
+			}
+
+			// Perform current action
+			if inpututil.IsKeyJustPressed(ebiten.KeyEnter) {
+				if g.currentAction.Value == actions.Sleep {
+					g.putTamagoInBed()
+				} else if g.currentAction.Value == actions.Feed {
+					g.feedTamago()
+				} else if g.currentAction.Value == actions.Candy {
+					g.giveACandy()
+				}
+			}
+		}
+
 		if g.count > 0 {
-			// Decrement the animation time
+			// Animation in progress, decrease the counter
 			g.count--
 		} else {
-			// default
-			if g.Tamago.Hapiness > tamagotchi.HapinessThreshold {
-				g.state = status.Happy
-			} else {
-				g.state = status.Sad
-			}
-
-			// feeding
-			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-				g.feedTamago()
-			}
-
-			// sleeping
-			if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonRight) {
+			// No animation in progress, let's update the animation
+			if g.Tamago.State == status.Sleeping {
 				g.putTamagoInBed()
+			} else {
+				// Default case
+				// Update the animation with the current Tamago state
+				g.currentAnimation = g.Tamago.State
 			}
 		}
 	} else {
-		g.state = status.Dead
+		if !g.deadMusicAlreadyPlayed {
+			g.CurrentMusic <- "dead"
+		}
 	}
 
 	return nil
@@ -91,17 +163,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 
 	if g.Tamago.IsAlive() {
-		if g.state == status.Dead {
-			screen.DrawImage(deadImage, op)
-		} else if g.state == status.Happy {
+		if g.currentAnimation == status.Happy {
 			screen.DrawImage(happyImage, op)
-		} else if g.state == status.Feeding {
+		} else if g.currentAnimation == status.Feeding {
 			screen.DrawImage(feedingImage, op)
-		} else if g.state == status.Sleeping {
+		} else if g.currentAnimation == status.Sleeping {
 			screen.DrawImage(sleepingImage, op)
-		} else if g.state == status.Sad {
+		} else if g.currentAnimation == status.Sad {
 			screen.DrawImage(sadImage, op)
 		}
+		g.drawActionBar(screen)
 	} else {
 		screen.DrawImage(deadImage, op)
 	}
@@ -113,13 +184,32 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func (g *Game) feedTamago() {
+	g.currentAnimation = status.Feeding
 	g.count = feedingAnimationLength
-	g.state = status.Feeding
 	g.Tamago.Feed(food.Meat)
 }
 
+func (g *Game) giveACandy() {
+	g.currentAnimation = status.Feeding
+	g.count = feedingAnimationLength
+	g.Tamago.Feed(food.Candy)
+}
+
 func (g *Game) putTamagoInBed() {
+	g.currentAnimation = status.Sleeping
 	g.count = sleepingAnimationLength
-	g.state = status.Sleeping
 	g.Tamago.Bed()
+}
+
+func (g *Game) drawActionBar(screen *ebiten.Image) {
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(80.0, 250.0)
+
+	if g.currentAction.Value == actions.Sleep {
+		screen.DrawImage(actionSleepImage, op)
+	} else if g.currentAction.Value == actions.Feed {
+		screen.DrawImage(actionFeedImage, op)
+	} else if g.currentAction.Value == actions.Candy {
+		screen.DrawImage(actionCandyImage, op)
+	}
 }

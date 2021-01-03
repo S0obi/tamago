@@ -31,7 +31,7 @@ const (
 
 // NewTamagotchi : Constructor of Tamagotchi struct
 func NewTamagotchi(name string) *Tamagotchi {
-	return &Tamagotchi{Name: name, Hunger: 50, Fatigue: 50, Hapiness: 50, Life: 100}
+	return &Tamagotchi{Name: name, Hunger: 45, Fatigue: 50, Hapiness: 50, Life: 100}
 }
 
 // PrintStatus : Print the Tamagotchi status
@@ -58,6 +58,8 @@ func (tamago *Tamagotchi) Live() {
 				tamago.State = status.Sleeping
 			} else if tamago.Hapiness <= HapinessThreshold {
 				tamago.State = status.Sad
+			} else if tamago.Hunger > 50 {
+				tamago.State = status.Starving
 			} else if tamago.drawSickness() {
 				tamago.State = status.Sick
 			} else {
@@ -95,7 +97,6 @@ func (tamago *Tamagotchi) Feed(yummy food.Food) {
 // Bed : tamagotchi will go to bed
 func (tamago *Tamagotchi) Bed() {
 	tamago.Fatigue = 0
-	tamago.Hunger += increase(tamago.Hunger, 10)
 }
 
 // Heal : tamagotchi will be healed

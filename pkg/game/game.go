@@ -39,6 +39,7 @@ var (
 	sleepingImage *ebiten.Image
 	sadImage      *ebiten.Image
 	sickImage     *ebiten.Image
+	starvingImage *ebiten.Image
 
 	// action image
 	actionFeedImage  *ebiten.Image
@@ -74,6 +75,7 @@ func (g *Game) Init() {
 	sleepingImage, _, _ = ebitenutil.NewImageFromFile("assets/dodo.png")
 	sadImage, _, _ = ebitenutil.NewImageFromFile("assets/sad.png")
 	sickImage, _, _ = ebitenutil.NewImageFromFile("assets/sick.png")
+	starvingImage, _, _ = ebitenutil.NewImageFromFile("assets/starving.png")
 
 	// action bar images
 	actionFeedImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/feed.png")
@@ -191,6 +193,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.DrawImage(sadImage, op)
 		} else if g.currentAnimation == status.Sick {
 			screen.DrawImage(sickImage, op)
+		} else if g.currentAnimation == status.Starving {
+			screen.DrawImage(starvingImage, op)
 		}
 		g.drawActionBar(screen)
 	} else {

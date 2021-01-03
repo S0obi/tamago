@@ -2,6 +2,7 @@ package game
 
 import (
 	"container/ring"
+	"fmt"
 	"tamago/pkg/actions"
 	"tamago/pkg/food"
 	"tamago/pkg/status"
@@ -95,7 +96,7 @@ func (g *Game) Init() {
 
 func (g *Game) inifiniteThemeMusic() {
 	for {
-		if !g.audioPlayer.IsPlaying() && g.Tamago.State != status.Dead && !g.muteMusic {
+		if !g.audioPlayer.IsPlaying() && g.Tamago.IsAlive() && !g.muteMusic {
 			g.CurrentMusic <- "theme"
 		}
 		time.Sleep(2 * time.Second)
@@ -200,6 +201,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else {
 		screen.DrawImage(deadImage, op)
 	}
+	ebitenutil.DebugPrint(screen, fmt.Sprintf("%dHP", g.Tamago.Life))
 }
 
 // Layout : ebiten layout method

@@ -56,12 +56,12 @@ func (tamago *Tamagotchi) Live() {
 		if tamago.State != status.Sick {
 			if tamago.Fatigue > FatigueThreshold {
 				tamago.State = status.Sleeping
-			} else if tamago.Hapiness <= HapinessThreshold {
-				tamago.State = status.Sad
-			} else if tamago.Hunger > 50 {
-				tamago.State = status.Starving
 			} else if tamago.drawSickness() {
 				tamago.State = status.Sick
+			} else if tamago.Hunger > 50 {
+				tamago.State = status.Starving
+			} else if tamago.Hapiness <= HapinessThreshold {
+				tamago.State = status.Sad
 			} else {
 				tamago.State = status.Happy
 			}

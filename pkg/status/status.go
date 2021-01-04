@@ -16,10 +16,12 @@ const (
 	Sad
 	// Sick : tamagotchi is sick
 	Sick
+	// Hungry : tamagotchi is hungry
+	Hungry
 	// Starving : tamagotchi is starving
 	Starving
 )
 
 func (s Status) String() string {
-	return [...]string{"Dead", "Happy", "Feeding", "Sleeping", "Sad", "Sick", "Starving"}[s]
+	return [...]string{"Dead", "Happy", "Feeding", "Sleeping", "Sad", "Sick", "Hungry", "Starving"}[s]
 }

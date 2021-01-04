@@ -19,17 +19,19 @@ import (
 )
 
 const (
-	// audio
-	sampleRate = 22050
+	// SampleRate : audio sample rate
+	SampleRate = 22050
 
-	// display
-	screenWidth  = 330
-	screenHeight = 330
-	defaultTPS   = 60
+	// ScreenWidth : screen width
+	ScreenWidth = 330
+	// ScreenHeight : screen height
+	ScreenHeight = 330
+	// DefaultTPS : default TPS
+	DefaultTPS = 60
 
 	// timing
-	feedingAnimationLength  = defaultTPS * 2
-	sleepingAnimationLength = defaultTPS * 5
+	feedingAnimationLength  = DefaultTPS * 2
+	sleepingAnimationLength = DefaultTPS * 5
 )
 
 var (
@@ -40,6 +42,7 @@ var (
 	sleepingImage *ebiten.Image
 	sadImage      *ebiten.Image
 	sickImage     *ebiten.Image
+	hungryImage   *ebiten.Image
 	starvingImage *ebiten.Image
 
 	// action image
@@ -76,6 +79,7 @@ func (g *Game) Init() {
 	sleepingImage, _, _ = ebitenutil.NewImageFromFile("assets/dodo.png")
 	sadImage, _, _ = ebitenutil.NewImageFromFile("assets/sad.png")
 	sickImage, _, _ = ebitenutil.NewImageFromFile("assets/sick.png")
+	hungryImage, _, _ = ebitenutil.NewImageFromFile("assets/hungry.png")
 	starvingImage, _, _ = ebitenutil.NewImageFromFile("assets/starving.png")
 
 	// action bar images
@@ -88,7 +92,7 @@ func (g *Game) Init() {
 
 	// audio
 	g.CurrentMusic = make(chan string)
-	g.audioContext = audio.NewContext(sampleRate)
+	g.audioContext = audio.NewContext(SampleRate)
 	g.audioPlayer = utils.NewMusicFromFile("assets/music/theme.mp3", g.audioContext)
 	g.deadMusicAlreadyPlayed = false
 	g.muteMusic = false
@@ -194,6 +198,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			screen.DrawImage(sadImage, op)
 		} else if g.currentAnimation == status.Sick {
 			screen.DrawImage(sickImage, op)
+		} else if g.currentAnimation == status.Hungry {
+			screen.DrawImage(hungryImage, op)
 		} else if g.currentAnimation == status.Starving {
 			screen.DrawImage(starvingImage, op)
 		}
@@ -206,7 +212,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 // Layout : ebiten layout method
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return screenWidth, screenHeight
+	return ScreenWidth, ScreenHeight
 }
 
 func (g *Game) feedTamago() {

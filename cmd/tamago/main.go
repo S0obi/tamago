@@ -10,11 +10,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-const (
-	screenWidth  = 320
-	screenHeight = 240
-)
-
 func printTamagoStatus(tamago *tamagotchi.Tamagotchi) {
 	for tamago.IsAlive() {
 		tamago.PrintStatus()
@@ -30,7 +25,7 @@ func main() {
 	go g.PlayMusic()
 	go printTamagoStatus(g.Tamago)
 
-	ebiten.SetWindowSize(screenWidth*2, screenHeight*2)
+	ebiten.SetWindowSize(game.ScreenWidth*2, game.ScreenHeight*2)
 	ebiten.SetWindowTitle("Tamago")
 	if err := ebiten.RunGame(&g); err != nil {
 		log.Fatal(err)

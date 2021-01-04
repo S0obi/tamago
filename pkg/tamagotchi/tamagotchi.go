@@ -23,8 +23,10 @@ const (
 	HapinessThreshold = 25
 	// FatigueThreshold : Max level of fatigue before sleeping
 	FatigueThreshold = 90
-	// HungerThreshold : Min level of hungryness before starving
-	HungerThreshold = 75
+	// HungerThreshold : Min level of hungryness
+	HungerThreshold = 50
+	// StarvingThreshold : Min level of hungryness before starving
+	StarvingThreshold = 75
 	// GameTick : Tamagotchi game tick in seconds
 	GameTick = 1
 )
@@ -47,7 +49,7 @@ func (tamago *Tamagotchi) Live() {
 		tamago.Hapiness = tamago.drawHapiness()
 
 		// Tamagotchi will loose life points if he is starving
-		if tamago.Hunger > HungerThreshold {
+		if tamago.Hunger > StarvingThreshold {
 			tamago.Life -= decrease(tamago.Life, 1)
 		} else if tamago.Hunger >= 100 {
 			tamago.Life -= decrease(tamago.Life, 5)
@@ -58,8 +60,10 @@ func (tamago *Tamagotchi) Live() {
 				tamago.State = status.Sleeping
 			} else if tamago.drawSickness() {
 				tamago.State = status.Sick
-			} else if tamago.Hunger > 50 {
+			} else if tamago.Hunger > StarvingThreshold {
 				tamago.State = status.Starving
+			} else if tamago.Hunger > HungerThreshold {
+				tamago.State = status.Hungry
 			} else if tamago.Hapiness <= HapinessThreshold {
 				tamago.State = status.Sad
 			} else {
@@ -85,7 +89,7 @@ func (tamago *Tamagotchi) IsAlive() bool {
 // Feed : give food to Tamagotchi
 func (tamago *Tamagotchi) Feed(yummy food.Food) {
 	if yummy == food.Candy {
-		tamago.Hunger -= decrease(tamago.Hunger, 15)
+		tamago.Hunger -= decrease(tamago.Hunger, 5)
 		tamago.Hapiness += increase(tamago.Hapiness, 25)
 		tamago.Fatigue += increase(tamago.Fatigue, 5)
 	} else if yummy == food.Meat {
@@ -114,7 +118,7 @@ func (tamago *Tamagotchi) drawHapiness() int {
 
 func (tamago *Tamagotchi) drawSickness() bool {
 	probabilityRange := 50
-	if tamago.Hunger > 50 {
+	if tamago.Hunger > HungerThreshold {
 		probabilityRange -= 10
 	}
 

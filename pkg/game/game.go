@@ -144,6 +144,7 @@ func (g *Game) Update() error {
 			}
 		}
 
+		// Pause the game
 		if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 			if g.Tamago.State == status.Paused {
 				g.Tamago.State = g.stateBeforePaused
@@ -192,6 +193,7 @@ func (g *Game) Update() error {
 			}
 		}
 	} else {
+		// Play the death song once :(
 		if !g.deadMusicAlreadyPlayed {
 			g.CurrentMusic <- "dead"
 		}
@@ -205,7 +207,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 
 	if g.Tamago.State != status.Paused {
-		screen.DrawImage(introImage, op)
 		if g.Tamago.IsAlive() {
 			if g.currentAnimation == status.Happy {
 				screen.DrawImage(happyImage, op)

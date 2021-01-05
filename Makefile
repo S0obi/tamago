@@ -1,5 +1,4 @@
 BINARY_NAME=tamago
-BINARY_OUTPUT_FOLDER_PATH=bin
 SERVICE_ENTRYPOINT=cmd/tamago/main.go
 
 .DEFAULT_GOAL = run
@@ -14,13 +13,13 @@ build: $(SERVICE_ENTRYPOINT)
 .PHONY: release
 release: build zip clean
 
-zip: assets bin/tamago
+zip: assets bin/$(BINARY_NAME)
 	cp -r assets bin/assets
-	cd bin && zip -r tamago.zip tamago assets
+	cd bin && zip -r tamago.zip $(BINARY_NAME) assets
 
 .PHONY: clean
 clean:
-	rm bin/tamago
+	rm bin/$(BINARY_NAME)
 	rm -rf bin/assets
 
 .PHONY: run

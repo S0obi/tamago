@@ -6,6 +6,8 @@ type Status int
 const (
 	// Dead : tamagoshi is dead
 	Dead Status = iota
+	// Paused : tamagotchi is paused
+	Paused
 	// Happy : tamagoshi is happy
 	Happy
 	// Feeding : tamagoshi is being feed
@@ -23,5 +25,5 @@ const (
 )
 
 func (s Status) String() string {
-	return [...]string{"Dead", "Happy", "Feeding", "Sleeping", "Sad", "Sick", "Hungry", "Starving"}[s]
+	return [...]string{"Dead", "Paused", "Happy", "Feeding", "Sleeping", "Sad", "Sick", "Hungry", "Starving"}[s]
 }

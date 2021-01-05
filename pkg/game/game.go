@@ -35,6 +35,9 @@ const (
 )
 
 var (
+	// game images
+	introImage *ebiten.Image
+
 	// animation images
 	happyImage    *ebiten.Image
 	deadImage     *ebiten.Image
@@ -45,7 +48,7 @@ var (
 	hungryImage   *ebiten.Image
 	starvingImage *ebiten.Image
 
-	// action image
+	// action images
 	actionFeedImage  *ebiten.Image
 	actionCandyImage *ebiten.Image
 	actionSleepImage *ebiten.Image
@@ -64,13 +67,18 @@ type Game struct {
 	CurrentMusic           chan string
 	deadMusicAlreadyPlayed bool
 	muteMusic              bool
+	stateBeforePaused      status.Status
 }
 
 // Init : init method
 func (g *Game) Init() {
 	g.Tamago = tamagotchi.NewTamagotchi("Tama")
 
-	g.Tamago.State = status.Happy
+	g.Tamago.State = status.Paused
+	g.stateBeforePaused = status.Happy
+
+	// game images
+	introImage, _, _ = ebitenutil.NewImageFromFile("assets/intro.png")
 
 	// animation images
 	happyImage, _, _ = ebitenutil.NewImageFromFile("assets/happy.png")
@@ -130,9 +138,18 @@ func (g *Game) Update() error {
 		if inpututil.IsKeyJustPressed(ebiten.KeyM) {
 			g.muteMusic = !g.muteMusic
 			if g.muteMusic {
-				g.audioPlayer.Close()
+				g.audioPlayer.Pause()
 			} else {
-				g.CurrentMusic <- "theme"
+				g.audioPlayer.Play()
+			}
+		}
+
+		if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+			if g.Tamago.State == status.Paused {
+				g.Tamago.State = g.stateBeforePaused
+			} else {
+				g.stateBeforePaused = g.Tamago.State
+				g.Tamago.State = status.Paused
 			}
 		}
 
@@ -187,27 +204,33 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 
-	if g.Tamago.IsAlive() {
-		if g.currentAnimation == status.Happy {
-			screen.DrawImage(happyImage, op)
-		} else if g.currentAnimation == status.Feeding {
-			screen.DrawImage(feedingImage, op)
-		} else if g.currentAnimation == status.Sleeping {
-			screen.DrawImage(sleepingImage, op)
-		} else if g.currentAnimation == status.Sad {
-			screen.DrawImage(sadImage, op)
-		} else if g.currentAnimation == status.Sick {
-			screen.DrawImage(sickImage, op)
-		} else if g.currentAnimation == status.Hungry {
-			screen.DrawImage(hungryImage, op)
-		} else if g.currentAnimation == status.Starving {
-			screen.DrawImage(starvingImage, op)
+	if g.Tamago.State != status.Paused {
+		screen.DrawImage(introImage, op)
+		if g.Tamago.IsAlive() {
+			if g.currentAnimation == status.Happy {
+				screen.DrawImage(happyImage, op)
+			} else if g.currentAnimation == status.Feeding {
+				screen.DrawImage(feedingImage, op)
+			} else if g.currentAnimation == status.Sleeping {
+				screen.DrawImage(sleepingImage, op)
+			} else if g.currentAnimation == status.Sad {
+				screen.DrawImage(sadImage, op)
+			} else if g.currentAnimation == status.Sick {
+				screen.DrawImage(sickImage, op)
+			} else if g.currentAnimation == status.Hungry {
+				screen.DrawImage(hungryImage, op)
+			} else if g.currentAnimation == status.Starving {
+				screen.DrawImage(starvingImage, op)
+			}
+			g.drawActionBar(screen)
+		} else {
+			screen.DrawImage(deadImage, op)
 		}
-		g.drawActionBar(screen)
+		ebitenutil.DebugPrint(screen, fmt.Sprintf("%dHP", g.Tamago.Life))
 	} else {
-		screen.DrawImage(deadImage, op)
+		screen.DrawImage(introImage, op)
 	}
-	ebitenutil.DebugPrint(screen, fmt.Sprintf("%dHP", g.Tamago.Life))
+
 }
 
 // Layout : ebiten layout method

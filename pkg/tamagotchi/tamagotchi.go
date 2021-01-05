@@ -44,33 +44,35 @@ func (tamago *Tamagotchi) PrintStatus() {
 // Live : Main Tamagotchi life loop
 func (tamago *Tamagotchi) Live() {
 	for tamago.IsAlive() {
-		tamago.Hunger += increase(tamago.Hunger, 1)
-		tamago.Fatigue += increase(tamago.Fatigue, 1)
-		tamago.Hapiness = tamago.drawHapiness()
+		if tamago.State != status.Paused {
+			tamago.Hunger += increase(tamago.Hunger, 1)
+			tamago.Fatigue += increase(tamago.Fatigue, 1)
+			tamago.Hapiness = tamago.drawHapiness()
 
-		// Tamagotchi will loose life points if he is starving
-		if tamago.Hunger > StarvingThreshold {
-			tamago.Life -= decrease(tamago.Life, 1)
-		} else if tamago.Hunger >= 100 {
-			tamago.Life -= decrease(tamago.Life, 5)
-		}
-
-		if tamago.State != status.Sick {
-			if tamago.Fatigue > FatigueThreshold {
-				tamago.State = status.Sleeping
-			} else if tamago.drawSickness() {
-				tamago.State = status.Sick
-			} else if tamago.Hunger > StarvingThreshold {
-				tamago.State = status.Starving
-			} else if tamago.Hunger > HungerThreshold {
-				tamago.State = status.Hungry
-			} else if tamago.Hapiness <= HapinessThreshold {
-				tamago.State = status.Sad
-			} else {
-				tamago.State = status.Happy
+			// Tamagotchi will loose life points if he is starving
+			if tamago.Hunger > StarvingThreshold {
+				tamago.Life -= decrease(tamago.Life, 1)
+			} else if tamago.Hunger >= 100 {
+				tamago.Life -= decrease(tamago.Life, 5)
 			}
-		} else {
-			tamago.Life -= decrease(tamago.Life, 5)
+
+			if tamago.State != status.Sick {
+				if tamago.Fatigue > FatigueThreshold {
+					tamago.State = status.Sleeping
+				} else if tamago.drawSickness() {
+					tamago.State = status.Sick
+				} else if tamago.Hunger > StarvingThreshold {
+					tamago.State = status.Starving
+				} else if tamago.Hunger > HungerThreshold {
+					tamago.State = status.Hungry
+				} else if tamago.Hapiness <= HapinessThreshold {
+					tamago.State = status.Sad
+				} else {
+					tamago.State = status.Happy
+				}
+			} else {
+				tamago.Life -= decrease(tamago.Life, 5)
+			}
 		}
 
 		time.Sleep(GameTick * time.Second)

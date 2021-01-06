@@ -15,6 +15,7 @@ type Tamagotchi struct {
 	Fatigue  int
 	Hapiness int
 	Life     int
+	Dirty    bool
 	State    status.Status
 }
 
@@ -28,17 +29,17 @@ const (
 	// StarvingThreshold : Min level of hungryness before starving
 	StarvingThreshold = 75
 	// GameTick : Tamagotchi game tick in seconds
-	GameTick = 1
+	GameTick = 2
 )
 
 // NewTamagotchi : Constructor of Tamagotchi struct
 func NewTamagotchi(name string) *Tamagotchi {
-	return &Tamagotchi{Name: name, Hunger: 45, Fatigue: 50, Hapiness: 50, Life: 100}
+	return &Tamagotchi{Name: name, Hunger: 25, Fatigue: 50, Hapiness: 50, Life: 100, Dirty: false}
 }
 
 // PrintStatus : Print the Tamagotchi status
 func (tamago *Tamagotchi) PrintStatus() {
-	fmt.Printf("[%s:%d:%s] hunger: %d, fatigue: %d, hapiness: %d\n", tamago.Name, tamago.Life, tamago.State.String(), tamago.Hunger, tamago.Fatigue, tamago.Hapiness)
+	fmt.Printf("[%s:%d:%s] hunger: %d, fatigue: %d, hapiness: %d, dirty: %t\n", tamago.Name, tamago.Life, tamago.State.String(), tamago.Hunger, tamago.Fatigue, tamago.Hapiness, tamago.Dirty)
 }
 
 // Live : Main Tamagotchi life loop
@@ -48,6 +49,13 @@ func (tamago *Tamagotchi) Live() {
 			tamago.Hunger += increase(tamago.Hunger, 1)
 			tamago.Fatigue += increase(tamago.Fatigue, 1)
 			tamago.Hapiness = tamago.drawHapiness()
+
+			// Tamagotchi will loose hapiness if he is dirty
+			if tamago.Dirty {
+				tamago.Hapiness -= decrease(tamago.Hapiness, 10)
+			} else {
+				tamago.Dirty = tamago.drawDirty()
+			}
 
 			// Tamagotchi will loose life points if he is starving
 			if tamago.Hunger > StarvingThreshold {
@@ -108,7 +116,16 @@ func (tamago *Tamagotchi) Bed() {
 // Heal : tamagotchi will be healed
 func (tamago *Tamagotchi) Heal() {
 	tamago.State = status.Happy
+	if rand.Intn(4) == 2 {
+		tamago.Life += increase(tamago.Life, 5)
+	}
 	tamago.Fatigue -= decrease(tamago.Fatigue, 25)
+}
+
+// Clean : tamagotchi will be cleaned
+func (tamago *Tamagotchi) Clean() {
+	tamago.Dirty = false
+	tamago.Hapiness += increase(tamago.Hapiness, 10)
 }
 
 func (tamago *Tamagotchi) drawHapiness() int {
@@ -119,7 +136,7 @@ func (tamago *Tamagotchi) drawHapiness() int {
 }
 
 func (tamago *Tamagotchi) drawSickness() bool {
-	probabilityRange := 50
+	probabilityRange := 100
 	if tamago.Hunger > HungerThreshold {
 		probabilityRange -= 10
 	}
@@ -129,11 +146,28 @@ func (tamago *Tamagotchi) drawSickness() bool {
 	}
 
 	if tamago.Fatigue > 50 {
-		probabilityRange -= 10
+		probabilityRange -= 20
+	}
+
+	if tamago.Dirty {
+		probabilityRange -= 25
 	}
 
 	if rand.Intn(probabilityRange) == 2 {
 		return true
+	}
+	return false
+}
+
+func (tamago *Tamagotchi) drawDirty() bool {
+	if tamago.Hunger < 10 {
+		if rand.Intn(20) == 2 {
+			return true
+		}
+	} else {
+		if rand.Intn(40) == 2 {
+			return true
+		}
 	}
 	return false
 }

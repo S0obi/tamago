@@ -32,6 +32,7 @@ const (
 	// timing
 	feedingAnimationLength  = DefaultTPS * 2
 	sleepingAnimationLength = DefaultTPS * 5
+	cleaningAnimationLength = DefaultTPS * 2
 )
 
 var (
@@ -47,12 +48,17 @@ var (
 	sickImage     *ebiten.Image
 	hungryImage   *ebiten.Image
 	starvingImage *ebiten.Image
+	cleaningImage *ebiten.Image
 
 	// action images
-	actionFeedImage  *ebiten.Image
-	actionCandyImage *ebiten.Image
-	actionSleepImage *ebiten.Image
-	actionsHealImage *ebiten.Image
+	actionFeedImage   *ebiten.Image
+	actionCandyImage  *ebiten.Image
+	actionSleepImage  *ebiten.Image
+	actionsHealImage  *ebiten.Image
+	actionsCleanImage *ebiten.Image
+
+	// element images
+	poopImage *ebiten.Image
 )
 
 // Game : ebiten game structure
@@ -89,12 +95,17 @@ func (g *Game) Init() {
 	sickImage, _, _ = ebitenutil.NewImageFromFile("assets/sick.png")
 	hungryImage, _, _ = ebitenutil.NewImageFromFile("assets/hungry.png")
 	starvingImage, _, _ = ebitenutil.NewImageFromFile("assets/starving.png")
+	cleaningImage, _, _ = ebitenutil.NewImageFromFile("assets/cleaning.png")
 
 	// action bar images
 	actionFeedImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/feed.png")
 	actionCandyImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/candy.png")
 	actionSleepImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/sleep.png")
 	actionsHealImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/heal.png")
+	actionsCleanImage, _, _ = ebitenutil.NewImageFromFile("assets/actions/clean.png")
+
+	// element images
+	poopImage, _, _ = ebitenutil.NewImageFromFile("assets/poop.png")
 
 	g.currentAction = actions.NewTamagoActions()
 
@@ -175,6 +186,8 @@ func (g *Game) Update() error {
 					g.giveACandy()
 				} else if g.currentAction.Value == actions.Heal {
 					g.healTamago()
+				} else if g.currentAction.Value == actions.Clean {
+					g.cleanTamago()
 				}
 			}
 		}
@@ -222,13 +235,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				screen.DrawImage(hungryImage, op)
 			} else if g.currentAnimation == status.Starving {
 				screen.DrawImage(starvingImage, op)
+			} else if g.currentAnimation == status.Cleaning {
+				screen.DrawImage(cleaningImage, op)
+			}
+			if g.Tamago.Dirty {
+				g.drawDirtyElements(screen)
 			}
 			g.drawActionBar(screen)
 		} else {
 			screen.DrawImage(deadImage, op)
 		}
+		// Display the Tamago life in top left
 		ebitenutil.DebugPrint(screen, fmt.Sprintf("%dHP", g.Tamago.Life))
 	} else {
+		// Tamago is paused, let's draw the intro image
 		screen.DrawImage(introImage, op)
 	}
 
@@ -263,6 +283,12 @@ func (g *Game) healTamago() {
 	g.Tamago.Heal()
 }
 
+func (g *Game) cleanTamago() {
+	g.currentAnimation = status.Cleaning
+	g.count = cleaningAnimationLength
+	g.Tamago.Clean()
+}
+
 func (g *Game) drawActionBar(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(80.0, 250.0)
@@ -275,5 +301,14 @@ func (g *Game) drawActionBar(screen *ebiten.Image) {
 		screen.DrawImage(actionCandyImage, op)
 	} else if g.currentAction.Value == actions.Heal {
 		screen.DrawImage(actionsHealImage, op)
+	} else if g.currentAction.Value == actions.Clean {
+		screen.DrawImage(actionsCleanImage, op)
 	}
+}
+
+func (g *Game) drawDirtyElements(screen *ebiten.Image) {
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(20.0, 190.0)
+
+	screen.DrawImage(poopImage, op)
 }
